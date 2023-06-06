@@ -1,0 +1,532 @@
+MAIN.C
+
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include "header.h"
+
+int main(void)                //4  
+{                             //6 
+	int odgovor = 1;
+
+	char* datoteka = "igraci.txt";
+
+	while (odgovor) {
+		odgovor = izbornik(datoteka);
+	}
+
+	printf("Kraj programa");
+
+	return 0;
+}
+
+
+
+//////////////////////////////
+
+FUNCTIONS.C
+
+
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "dataType.h"
+
+static int brojIgraca = 0;   //5 
+
+void kreiranjeDatoteke(const char* const ime)      //7 
+{                                                  //16
+	FILE* fileIgraci = fopen(ime, "wb");
+	if (fileIgraci == NULL)
+	{
+		perror("Kreiranje datoteke igraci.bin");
+		exit(EXIT_FAILURE);
+	}
+
+	fwrite(&brojIgraca, sizeof(int), 1, fileIgraci);
+
+	printf("Kreirana je datoteka igraci.bin\n\n");
+
+	fclose(fileIgraci);
+}
+
+void dodavanjeIgraca(const char* const ime)
+{
+	FILE* fileIgraci = fopen(ime, "rb+");
+
+	if (fileIgraci == NULL)
+	{
+		perror("Dodavanje igraca u igraci.bin");
+
+		exit(EXIT_FAILURE);
+	}
+
+	fread(&brojIgraca, sizeof(int), 1, fileIgraci);
+
+	printf("Broj igraca: %d\n\n", brojIgraca);
+
+	IGRAC temp = { 0 };
+	temp.redniBrojIgraca = brojIgraca;
+
+	printf("Unesite broj dresa igraca: ");
+	scanf("%d", &temp.brDresa);
+	getchar();
+
+	printf("Unesite ime igraca: ");
+	scanf("%19[^\n]", &temp.ime);
+	getchar();
+
+	printf("Unesite prezime igraca: ");
+	scanf("%19[^\n]", &temp.prezime);
+	getchar();
+
+	printf("Unesite broj utakmica igraca: ");
+	scanf("%f", &temp.broj_utakmica);
+	getchar();
+
+	printf("Unesite prosjek minuta igraca: ");
+	scanf("%f", &temp.prosjek_minuta);
+	getchar();
+
+	printf("Unesite prosjek poena igraca: ");
+	scanf("%f", &temp.prosjek_poena);
+	getchar();
+
+	printf("Unesite prosjek asistencija igraca: ");
+	scanf("%f", &temp.prosjek_asistencija);
+	getchar();
+
+	printf("Unesite prosjek skokova igraca: ");
+	scanf("%f", &temp.prosjek_skokova);
+	getchar();
+
+	printf("Unesite prosjek ukradenih lopti igraca: ");
+	scanf("%f", &temp.prosjek_ukradenih);
+	getchar();
+
+	printf("Unesite prosjek blokada igraca: ");
+	scanf("%f", &temp.prosjek_blokada);
+	getchar();
+
+	printf("Unesite postotak iz polja igraca: ");
+	scanf("%f", &temp.postotak_iz_polja);
+	getchar();
+
+	printf("Unesite postotak trice igraca: ");
+	scanf("%f", &temp.postotak_trice);
+	getchar();
+
+	printf("Unesite postotak bacanja igraca: ");
+	scanf("%f", &temp.postotak_bacanja);
+	getchar();
+
+
+	fseek(fileIgraci, sizeof(IGRAC) * brojIgraca, SEEK_CUR);
+	fwrite(&temp, sizeof(IGRAC), 1, fileIgraci);
+	printf("\nNovi igrac dodan.\n\n");
+
+	rewind(fileIgraci);
+	brojIgraca++;
+
+	fwrite(&brojIgraca, sizeof(int), 1, fileIgraci);
+
+	fclose(fileIgraci);
+}
+
+void* ucitavanjeIgraca(const char* const ime)
+{
+FILE* fileIgraci = fopen(ime, "rb");
+
+	if (fileIgraci == NULL)
+	{
+		perror("Ucitavanje igraca iz igraci.bin");     //19
+		return NULL;
+		exit(EXIT_FAILURE);
+	}
+
+	fread(&brojIgraca, sizeof(int), 1, fileIgraci);
+	printf("Broj igraca u bazi podataka: %d\n\n", brojIgraca);
+
+	IGRAC* poljeIgraca = (IGRAC*)calloc(brojIgraca, sizeof(IGRAC));          //13
+
+	if (poljeIgraca == NULL)
+	{
+		perror("Zauzimanje memorije za igrace");
+		return NULL;
+		exit(EXIT_FAILURE);
+	}
+
+	fread(poljeIgraca, sizeof(IGRAC), brojIgraca, fileIgraci);
+
+	//printf("Svi igraci su uspjesno ucitani.\n\n");
+
+	return poljeIgraca;
+}
+
+void ispisPodataka(const IGRAC* const polje) {
+
+	if (polje == NULL)
+	{
+		printf("Polje igraca prazno\n");
+		return;
+	}
+
+	int i;
+
+	for (i = 0; i < brojIgraca; i++)
+	{
+		printf("Broj igraca: %d.\n\tBroj dresa: %d\n\tIme: %s\n\tPrezime: %s\n\tBroj utakmica: %0.f\n\tProsjecna minutaza: %.1f min\n\tPoeni: %.1f pts\n\tAsistencije: %.1f\n\tSkokovi: %.1f\n\tUkradene lopte: %.1f\n\tBlokade: %.1f\n\tPostotak iz polja: %.1f\n\tPostotak trice: %.1f\n\tPostotak bacanja: %.1f\n\n",
+			i + 1,
+			(polje + i)->brDresa,
+			(polje + i)->ime,
+			(polje + i)->prezime,
+			(polje + i)->broj_utakmica,
+			(polje + i)->prosjek_minuta,
+			(polje + i)->prosjek_poena,
+			(polje + i)->prosjek_asistencija, 
+			(polje + i)->prosjek_skokova,
+			(polje + i)->prosjek_ukradenih, 
+			(polje + i)->prosjek_blokada,
+			(polje + i)->postotak_iz_polja, 
+			(polje + i)->postotak_trice,
+		    (polje + i)->postotak_bacanja);
+
+	}
+}
+
+void* dresIgraca(IGRAC* const polje)
+{
+	if (polje == NULL)
+	{
+		printf("Polje igraca je prazno\n");
+		return;
+	}
+
+	int i;
+
+	int trazeniDres;
+
+	printf("Unesite broj dresa igraca kojeg trazite: \n\n");
+	scanf("%d", &trazeniDres);
+
+	for (i = 0; i < brojIgraca; i++) {
+
+		if (trazeniDres == (polje + i)->brDresa) {
+			printf("Igrac pronaden.\n\n");
+
+			return (polje + i);
+		}
+	}
+
+	return NULL;
+}
+
+void* imeIgraca(IGRAC* const polje)
+{
+	if (polje == NULL)
+	{
+		printf("Polje igraca je prazno.\n");
+		return;
+	}
+
+	int i;
+
+	char trazenoIme[20];
+
+	printf("Unesite ime igraca kojeg trazite: \n\n");
+	scanf("%s", &trazenoIme);
+
+	for (i = 0; i < brojIgraca; i++) {
+
+		if (strcmp((polje + i)->ime, trazenoIme) == 0) {
+			
+				printf("Igrac pronaden.\n\n");
+
+			return (polje + i);
+		}
+	}
+
+	return NULL;
+}
+
+void* prezimeIgraca(IGRAC* const polje)
+{
+
+	if (polje == NULL)
+	{
+		printf("Polje igraca je prazno\n");
+		return;
+	}
+
+	int i;
+
+	char trazenoPrezime[20];
+
+	printf("Unesite prezime igraca kojeg trazite: \n\n");
+	scanf("%s", &trazenoPrezime);
+
+	for (i = 0; i < brojIgraca; i++) {
+
+		if (strcmp((polje + i)->prezime, trazenoPrezime) == 0) {
+			printf("igrac pronaden.\n\n");
+
+			return (polje + i);
+		}
+	}
+
+	return NULL;
+}
+
+int izlazIzPrograma(IGRAC* polje) {
+
+	free(polje);                      //14 
+                                    //15
+	return 0;
+}
+
+
+//////////////////////////////////////
+
+
+HEADER.C
+
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <stdlib.h>
+#include "dataType.h"
+#include "header.h"
+
+static int brojIgraca = 0;
+
+int izbornik(const char* const ime)
+{
+	int odgovor = 0;
+
+	static IGRAC* poljeIgraca = NULL;
+
+	static IGRAC* pronadeniIgrac = NULL;
+
+	if (poljeIgraca != NULL)
+	{
+		free(poljeIgraca);
+		poljeIgraca = NULL;
+	}
+
+	poljeIgraca = (IGRAC*)ucitavanjeIgraca(ime);
+
+	if (poljeIgraca == NULL)
+	{
+		exit(EXIT_FAILURE);
+	}
+
+	printf("\n\t\t**************************************************\n\n");                      //8
+	printf("\t\tOdaberite jednu od opcija: \n\n");
+
+	printf("\t\tOpcija 1: Kreiranje datoteke\n");
+	printf("\t\tOpcija 2: Dodavanje igraca\n");
+	printf("\t\tOpcija 3: Ispisi podatke o svim igracima\n");
+	printf("\t\tOpcija 4: Pretrazi igraca po broju dresa\n");
+	printf("\t\tOpcija 5: Pretrazi igraca po imenu\n");
+	printf("\t\tOpcija 6: Pretrazi igraca po prezimenu\n");
+	printf("\t\tOpcija 7: Izlaz iz programa\n\n");
+
+	printf("\t\t**************************************************\n\n");
+
+	scanf("%d", &odgovor);
+
+	switch (odgovor)
+	{
+	case 1:
+		system("cls");
+		kreiranjeDatoteke(ime);
+		break;
+
+	case 2:
+		system("cls");
+		dodavanjeIgraca(ime);
+		break;
+
+	case 3:
+		system("cls");
+
+		ispisPodataka(poljeIgraca);
+
+		break;
+
+	case 4:
+		system("cls");
+
+		pronadeniIgrac = (IGRAC*)dresIgraca(poljeIgraca);
+
+		if (pronadeniIgrac != NULL)
+		{
+			printf("Redni broj igraca: %d.\n", pronadeniIgrac->redniBrojIgraca);
+			printf("Broj dresa: %d\n", pronadeniIgrac->brDresa);
+			printf("Ime: %s\n", pronadeniIgrac->ime);
+			printf("Prezime: %s\n", pronadeniIgrac->prezime);
+			printf("Broj utakmica: %f\n", pronadeniIgrac->broj_utakmica);
+			printf("Minutaza: %.1f\n", pronadeniIgrac->prosjek_minuta);
+			printf("Poeni: %.1f\n", pronadeniIgrac->prosjek_poena);
+			printf("Asistencije: %.1f\n", pronadeniIgrac->prosjek_asistencija);
+			printf("Skokovi: %.1f\n", pronadeniIgrac->prosjek_skokova);
+			printf("Ukradene lopte: %.1f\n", pronadeniIgrac->prosjek_ukradenih);
+			printf("Blokade: %.1f\n", pronadeniIgrac->prosjek_blokada);
+			printf("Postotak iz polja: %.1f\n", pronadeniIgrac->postotak_iz_polja);
+			printf("Postotak trice: %.1f\n", pronadeniIgrac->postotak_trice);
+			printf("Postotak bacanja: %.1f\n", pronadeniIgrac->postotak_bacanja);
+
+
+		}
+		else
+		{
+			printf("Ne postoji igrac s tim brojem dresa.\n");
+		}
+
+		break;
+
+	case 5:
+		system("cls");
+
+		pronadeniIgrac = (IGRAC*)imeIgraca(poljeIgraca);
+
+		if (pronadeniIgrac != NULL)
+		{
+			printf("Redni broj igraca: %d.\n", pronadeniIgrac->redniBrojIgraca);
+			printf("Broj dresa: %d\n", pronadeniIgrac->brDresa);
+			printf("Ime: %s\n", pronadeniIgrac->ime);
+			printf("Prezime: %s\n", pronadeniIgrac->prezime);
+			printf("Broj utakmica: %f\n", pronadeniIgrac->broj_utakmica);
+			printf("Minutaza: %.1f\n", pronadeniIgrac->prosjek_minuta);
+			printf("Poeni: %.1f\n", pronadeniIgrac->prosjek_poena);
+			printf("Asistencije: %.1f\n", pronadeniIgrac->prosjek_asistencija);
+			printf("Skokovi: %.1f\n", pronadeniIgrac->prosjek_skokova);
+			printf("Ukradene lopte: %.1f\n", pronadeniIgrac->prosjek_ukradenih);
+			printf("Blokade: %.1f\n", pronadeniIgrac->prosjek_blokada);
+			printf("Postotak iz polja: %.1f\n", pronadeniIgrac->postotak_iz_polja);
+			printf("Postotak trice: %.1f\n", pronadeniIgrac->postotak_trice);
+			printf("Postotak bacanja: %.1f\n", pronadeniIgrac->postotak_bacanja);
+
+
+		}
+		else
+		{
+			printf("Ne postoji igrac s tim imenom.\n");
+		}
+
+		break;
+
+	case 6:
+		system("cls");
+
+		pronadeniIgrac = (IGRAC*)prezimeIgraca(poljeIgraca);
+
+		if (pronadeniIgrac != NULL)
+		{
+			printf("Redni broj igraca: %d.\n", pronadeniIgrac->redniBrojIgraca);
+			printf("Broj dresa: %d\n", pronadeniIgrac->brDresa);
+			printf("Ime: %s\n", pronadeniIgrac->ime);
+			printf("Prezime: %s\n", pronadeniIgrac->prezime);
+			printf("Broj utakmica: %f\n", pronadeniIgrac->broj_utakmica);
+			printf("Minutaza: %.1f\n", pronadeniIgrac->prosjek_minuta);
+			printf("Poeni: %.1f\n", pronadeniIgrac->prosjek_poena);
+			printf("Asistencije: %.1f\n", pronadeniIgrac->prosjek_asistencija);
+			printf("Skokovi: %.1f\n", pronadeniIgrac->prosjek_skokova);
+			printf("Ukradene lopte: %.1f\n", pronadeniIgrac->prosjek_ukradenih);
+			printf("Blokade: %.1f\n", pronadeniIgrac->prosjek_blokada);
+			printf("Postotak iz polja: %.1f\n", pronadeniIgrac->postotak_iz_polja);
+			printf("Postotak trice: %.1f\n", pronadeniIgrac->postotak_trice);
+			printf("Postotak bacanja: %.1f\n", pronadeniIgrac->postotak_bacanja);
+
+
+
+		}
+		else
+		{
+			printf("Ne postoji igrac s tim prezimenom.\n");
+		}
+
+		break;
+
+	case 7:
+		system("cls");
+		odgovor = izlazIzPrograma(poljeIgraca);
+		break;
+
+	default:
+		odgovor = 0;
+	}
+
+	return odgovor;
+}
+
+///////////////////////////////////
+
+
+HEADER.H
+
+
+#ifndef FUNCION_H
+#define FUNCION_H
+#include "dataType.h"
+
+int izbornik(const char* const);    //4
+
+void kreiranjeDatoteke(const char* const);
+
+void dodavanjeIgraca(const char* const);
+
+void* ucitavanjeIgraca(const char* const);
+
+void ispisPodataka(const IGRAC* const);
+
+void* dresIgraca(IGRAC* const);
+
+void* imeIgraca(IGRAC* const);
+
+void* prezimeIgraca(IGRAC* const);
+
+int izlazIzPrograma(IGRAC*);
+
+#endif
+
+
+///////////////////////////
+
+DATATYPE.H
+
+#ifndef DATATYPE_H
+#define DATATYPE_H
+
+typedef struct igrac {         //2   
+	int redniBrojIgraca;         //3
+                               //10
+	int brDresa;
+
+	char ime[20];       //1
+	 
+	char prezime[20];
+
+	float broj_utakmica;
+
+	float prosjek_minuta;
+
+	float prosjek_poena;
+
+	float prosjek_asistencija;
+
+	float prosjek_skokova;
+
+	float prosjek_ukradenih;
+
+	float prosjek_blokada;
+
+	float postotak_iz_polja;
+
+	float postotak_trice;
+
+	float postotak_bacanja;
+
+
+}IGRAC;
+
+#endif
